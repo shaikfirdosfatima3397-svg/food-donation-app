@@ -108,7 +108,19 @@ const initDb = async () => {
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         `, user);
       }
-      console.log("Default users seeded.");
+    }
+
+    // Guarantee that admin user always exists
+    const adminCheck = await client.query("SELECT * FROM users WHERE email = 'admin@sharemeal.org'");
+    if (adminCheck.rows.length === 0) {
+      console.log("Seeding admin user specifically...");
+      const salt = bcrypt.genSaltSync(10);
+      const adminHash = bcrypt.hashSync('admin123', salt);
+      await client.query(`
+        INSERT INTO users (id, email, password_hash, name, role, phone, address, lat, lng)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `, ["u_admin_1", "admin@sharemeal.org", adminHash, "Super Admin", "admin", "+91 99999 99999", "Admin Head Office, CP, New Delhi", 28.6139, 77.2090]);
+      console.log("Admin user seeded.");
     }
 
     // Seed default listings if empty
