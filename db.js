@@ -110,8 +110,8 @@ const initDb = async () => {
     }
 
     // Seed default listings if empty
-    const resListings = await client.query("SELECT COUNT(*) FROM listings");
-    if (parseInt(resListings[0].count) === 0) {
+    const { rows: rowsListings } = await client.query("SELECT COUNT(*) FROM listings");
+    if (parseInt(rowsListings[0].count) === 0) {
       console.log("Seeding default listings...");
       const SEED_LISTINGS = [
         ["l_1", "u_donor_1", "Green Garden Café", "+91 98765 43210", "garden@cafe.com", "Freshly Baked Sourdough Bread", "15 loaves of artisanal sourdough bread baked this morning. Perfect condition, unsold stock.", "15 loaves", new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), "Bakery", "available", "H-Block, Connaught Place, New Delhi", 28.6304, 77.2177, null, new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()],
@@ -129,8 +129,8 @@ const initDb = async () => {
     }
 
     // Seed default pickups if empty
-    const resPickups = await client.query("SELECT COUNT(*) FROM pickups");
-    if (parseInt(resPickups[0].count) === 0) {
+    const { rows: rowsPickups } = await client.query("SELECT COUNT(*) FROM pickups");
+    if (parseInt(rowsPickups[0].count) === 0) {
       console.log("Seeding default pickups...");
       const SEED_PICKUPS = [
         ["p_1", "l_2", "u_ngo_1", "Hope Food Bank", "requested", new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), new Date(Date.now() - 3.5 * 60 * 60 * 1000).toISOString()],
