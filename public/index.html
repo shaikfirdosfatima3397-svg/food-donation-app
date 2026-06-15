@@ -475,6 +475,134 @@
       </div>
     </section>
 
+    <!-- 4b. ADMIN DASHBOARD -->
+    <section id="admin-dashboard-section" class="app-section">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title">Admin Command Center</h1>
+          <p class="dashboard-desc">Real-time network analytics and system management</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid mb-6">
+        <div class="glass-card stat-card gradient-blue">
+          <div class="stat-icon-wrapper"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-details">
+            <span class="stat-lbl">Total Registered Users</span>
+            <h2 id="admin-stat-users" class="stat-val">0</h2>
+            <span class="stat-sub">Donors + NGOs</span>
+          </div>
+        </div>
+        <div class="glass-card stat-card gradient-green">
+          <div class="stat-icon-wrapper"><i class="fa-solid fa-store"></i></div>
+          <div class="stat-details">
+            <span class="stat-lbl">Registered Donors</span>
+            <h2 id="admin-stat-donors" class="stat-val">0</h2>
+            <span class="stat-sub">Active Businesses</span>
+          </div>
+        </div>
+        <div class="glass-card stat-card gradient-purple">
+          <div class="stat-icon-wrapper"><i class="fa-solid fa-hand-holding-heart"></i></div>
+          <div class="stat-details">
+            <span class="stat-lbl">Registered NGOs</span>
+            <h2 id="admin-stat-ngos" class="stat-val">0</h2>
+            <span class="stat-sub">Active Organizations</span>
+          </div>
+        </div>
+        <div class="glass-card stat-card gradient-orange">
+          <div class="stat-icon-wrapper"><i class="fa-solid fa-clipboard-list"></i></div>
+          <div class="stat-details">
+            <span class="stat-lbl">Surplus Listings</span>
+            <h2 id="admin-stat-listings" class="stat-val">0</h2>
+            <span class="stat-sub" id="admin-stat-listings-sub">0 available</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail tables -->
+      <div class="admin-tables-container">
+        <!-- Donors list -->
+        <div class="glass-card mb-6">
+          <div class="card-header-flex">
+            <h2 class="card-title"><i class="fa-solid fa-store"></i> Registered Donors</h2>
+            <span class="badge" id="admin-count-donors">0 Donors</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Business Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Address</th>
+                  <th>Coordinates</th>
+                </tr>
+              </thead>
+              <tbody id="admin-donors-tbody">
+                <tr>
+                  <td colspan="5" class="table-empty">Loading donors...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- NGOs list -->
+        <div class="glass-card mb-6">
+          <div class="card-header-flex">
+            <h2 class="card-title"><i class="fa-solid fa-hand-holding-heart"></i> Registered NGOs</h2>
+            <span class="badge" id="admin-count-ngos">0 NGOs</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>NGO Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Address</th>
+                  <th>Coordinates</th>
+                </tr>
+              </thead>
+              <tbody id="admin-ngos-tbody">
+                <tr>
+                  <td colspan="5" class="table-empty">Loading NGOs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Listings list -->
+        <div class="glass-card">
+          <div class="card-header-flex">
+            <h2 class="card-title"><i class="fa-solid fa-clipboard-list"></i> All Food Donations</h2>
+            <span class="badge" id="admin-count-listings">0 Listings</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Food Item</th>
+                  <th>Category</th>
+                  <th>Donor</th>
+                  <th>Quantity</th>
+                  <th>Expiry</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="admin-listings-tbody">
+                <tr>
+                  <td colspan="6" class="table-empty">Loading listings...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 5. LIVE TRACKING DETAIL OVERLAY / POPUP -->
     <div class="modal-backdrop hidden" id="tracking-modal">
       <div class="modal-card glass-card">

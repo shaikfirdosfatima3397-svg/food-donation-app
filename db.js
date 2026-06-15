@@ -92,12 +92,14 @@ const initDb = async () => {
       const salt = bcrypt.genSaltSync(10);
       const donorHash = bcrypt.hashSync('donor123', salt);
       const ngoHash = bcrypt.hashSync('ngo123', salt);
+      const adminHash = bcrypt.hashSync('admin123', salt);
 
       const SEED_USERS = [
         ["u_donor_1", "garden@cafe.com", donorHash, "Green Garden Café", "donor", "+91 98765 43210", "H-Block, Connaught Place, New Delhi", 28.6304, 77.2177],
         ["u_donor_2", "fresh@market.com", donorHash, "Fresh Mart Supermarket", "donor", "+91 98765 01234", "Karol Bagh Metro Station, New Delhi", 28.6448, 77.1873],
         ["u_ngo_1", "hope@foodbank.org", ngoHash, "Hope Food Bank", "ngo", "+91 99999 11111", "Rajendra Place District Centre, New Delhi", 28.6421, 77.1782],
-        ["u_ngo_2", "share@care.org", ngoHash, "Care & Share Foundation", "ngo", "+91 88888 22222", "KG Marg, Near India Gate, New Delhi", 28.6129, 77.2295]
+        ["u_ngo_2", "share@care.org", ngoHash, "Care & Share Foundation", "ngo", "+91 88888 22222", "KG Marg, Near India Gate, New Delhi", 28.6129, 77.2295],
+        ["u_admin_1", "admin@sharemeal.org", adminHash, "Super Admin", "admin", "+91 99999 99999", "Admin Head Office, CP, New Delhi", 28.6139, 77.2090]
       ];
 
       for (const user of SEED_USERS) {

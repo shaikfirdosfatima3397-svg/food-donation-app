@@ -267,8 +267,12 @@ function showSection(sectionId) {
   if (sectionId === 'dashboard-section') {
     if (!currentUser) {
       targetId = 'auth-section';
-    } else {
-      targetId = currentUser.role === 'donor' ? 'donor-dashboard-section' : 'ngo-dashboard-section';
+    } else if (currentUser.role === 'donor') {
+      targetId = 'donor-dashboard-section';
+    } else if (currentUser.role === 'ngo') {
+      targetId = 'ngo-dashboard-section';
+    } else if (currentUser.role === 'admin') {
+      targetId = 'admin-dashboard-section';
     }
   }
 
@@ -357,16 +361,18 @@ function setupLoggedInUI() {
   let modeTag = isSimulatedMode ? ' (SIM)' : '';
   greeting.textContent = `${currentUser.name} (${currentUser.role.toUpperCase()})${modeTag}`;
   greeting.classList.remove('hidden');
-
+ 
   const dashLink = document.getElementById('dashboard-link');
   dashLink.classList.remove('hidden');
-
+ 
   document.getElementById('notif-bell').classList.remove('hidden');
-
+ 
   if (currentUser.role === 'donor') {
-    document.getElementById('donor-welcome-msg').textContent = `Welcome back, ${currentUser.name}. Track pickup coordinates below.`;
-  } else {
-    document.getElementById('ngo-welcome-msg').textContent = `Welcome back, ${currentUser.name}. Explore surplus food map coordinates.`;
+    const el = document.getElementById('donor-welcome-msg');
+    if (el) el.textContent = `Welcome back, ${currentUser.name}. Track pickup coordinates below.`;
+  } else if (currentUser.role === 'ngo') {
+    const el = document.getElementById('ngo-welcome-msg');
+    if (el) el.textContent = `Welcome back, ${currentUser.name}. Explore surplus food map coordinates.`;
   }
 }
 
@@ -623,8 +629,10 @@ async function loadDashboardData() {
 
     if (currentUser.role === 'donor') {
       renderDonorDashboard();
-    } else {
+    } else if (currentUser.role === 'ngo') {
       renderNgoDashboard();
+    } else if (currentUser.role === 'admin') {
+      renderAdminDashboard();
     }
   } catch (e) {
     console.error('Error fetching dashboard data:', e);
@@ -642,6 +650,82 @@ window.sendReadyNotification = async function(listingId) {
     showToast('Notification Error', err.message, 'danger');
   }
 };
+
+// --- ADMIN WORKFLOWS ---
+function renderAdminDashboard() {
+  const donors = allOrganizations.filter(u => u.role === 'donor');
+  const ngos = allOrganizations.filter(u => u.role === 'ngo');
+
+  // Stats Card values
+  document.getElementById('admin-stat-users').textContent = allOrganizations.length;
+  document.getElementById('admin-stat-donors').textContent = donors.length;
+  document.getElementById('admin-stat-ngos').textContent = ngos.length;
+  document.getElementById('admin-stat-listings').textContent = allListings.length;
+
+  const availableListings = allListings.filter(l => l.status === 'available');
+  document.getElementById('admin-stat-listings-sub').textContent = `${availableListings.length} available`;
+
+  // Count Badges
+  document.getElementById('admin-count-donors').textContent = `${donors.length} Donors`;
+  document.getElementById('admin-count-ngos').textContent = `${ngos.length} NGOs`;
+  document.getElementById('admin-count-listings').textContent = `${allListings.length} Listings`;
+
+  // Donors Table
+  const donorsTbody = document.getElementById('admin-donors-tbody');
+  if (donors.length === 0) {
+    donorsTbody.innerHTML = `<tr><td colspan="5" class="table-empty">No donors registered yet.</td></tr>`;
+  } else {
+    donorsTbody.innerHTML = donors.map(d => `
+      <tr>
+        <td><strong>${escapeHtml(d.name)}</strong></td>
+        <td>${escapeHtml(d.email)}</td>
+        <td>${escapeHtml(d.phone || 'N/A')}</td>
+        <td>${escapeHtml(d.address || 'N/A')}</td>
+        <td><code class="text-sm">${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}</code></td>
+      </tr>
+    `).join('');
+  }
+
+  // NGOs Table
+  const ngosTbody = document.getElementById('admin-ngos-tbody');
+  if (ngos.length === 0) {
+    ngosTbody.innerHTML = `<tr><td colspan="5" class="table-empty">No NGOs registered yet.</td></tr>`;
+  } else {
+    ngosTbody.innerHTML = ngos.map(n => `
+      <tr>
+        <td><strong>${escapeHtml(n.name)}</strong></td>
+        <td>${escapeHtml(n.email)}</td>
+        <td>${escapeHtml(n.phone || 'N/A')}</td>
+        <td>${escapeHtml(n.address || 'N/A')}</td>
+        <td><code class="text-sm">${n.lat.toFixed(5)}, ${n.lng.toFixed(5)}</code></td>
+      </tr>
+    `).join('');
+  }
+
+  // Listings Table
+  const listingsTbody = document.getElementById('admin-listings-tbody');
+  if (allListings.length === 0) {
+    listingsTbody.innerHTML = `<tr><td colspan="6" class="table-empty">No food listings published yet.</td></tr>`;
+  } else {
+    listingsTbody.innerHTML = allListings.map(l => {
+      let statusClass = 'status-available';
+      if (l.status === 'requested') statusClass = 'status-requested';
+      if (l.status === 'picked_up') statusClass = 'status-picked_up';
+      if (l.status === 'delivered') statusClass = 'status-delivered';
+
+      return `
+        <tr>
+          <td><strong>${escapeHtml(l.title)}</strong></td>
+          <td><span class="category-badge text-xs" style="margin:0;">${escapeHtml(l.foodType)}</span></td>
+          <td>${escapeHtml(l.donorName)}</td>
+          <td>${escapeHtml(l.quantity)}</td>
+          <td>${formatDate(l.expiryTime)}</td>
+          <td><span class="status-indicator ${statusClass}">${escapeHtml(l.status.toUpperCase().replace('_', ' '))}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+}
 
 // --- DONOR WORKFLOWS ---
 function renderDonorDashboard() {
@@ -1624,7 +1708,8 @@ const SEED_USERS = [
   { id: "u_donor_1", email: "garden@cafe.com", name: "Green Garden Café", role: "donor", phone: "+91 98765 43210", address: "H-Block, Connaught Place, New Delhi", lat: 28.6304, lng: 77.2177 },
   { id: "u_donor_2", email: "fresh@market.com", name: "Fresh Mart Supermarket", role: "donor", phone: "+91 98765 01234", address: "Karol Bagh Metro Station, New Delhi", lat: 28.6448, lng: 77.1873 },
   { id: "u_ngo_1", email: "hope@foodbank.org", name: "Hope Food Bank", role: "ngo", phone: "+91 99999 11111", address: "Rajendra Place District Centre, New Delhi", lat: 28.6421, lng: 77.1782 },
-  { id: "u_ngo_2", email: "share@care.org", name: "Care & Share Foundation", role: "ngo", phone: "+91 88888 22222", address: "KG Marg, Near India Gate, New Delhi", lat: 28.6129, lng: 77.2295 }
+  { id: "u_ngo_2", email: "share@care.org", name: "Care & Share Foundation", role: "ngo", phone: "+91 88888 22222", address: "KG Marg, Near India Gate, New Delhi", lat: 28.6129, lng: 77.2295 },
+  { id: "u_admin_1", email: "admin@sharemeal.org", name: "Super Admin", role: "admin", phone: "+91 99999 99999", address: "Admin Head Office, CP, New Delhi", lat: 28.6139, lng: 77.2090 }
 ];
 
 const SEED_LISTINGS = [
