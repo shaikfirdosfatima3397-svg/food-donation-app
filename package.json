@@ -1,0 +1,17 @@
+{
+  "name": "sharemeal-food-donation",
+  "version": "1.0.0",
+  "description": "ShareMeal - Food Donation Web Application with maps and real-time notifications.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "ws": "^8.16.0"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}

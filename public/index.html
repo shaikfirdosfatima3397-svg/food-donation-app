@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShareMeal - Food Donation and Tracking Network</title>
+  <!-- Google Fonts: Inter and Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand" id="nav-brand">
+        <i class="fa-solid fa-hand-holding-heart brand-icon"></i>
+        <span>Share<span class="brand-highlight">Meal</span></span>
+      </a>
+
+      <div class="nav-links" id="nav-links-container">
+        <!-- Logged out states -->
+        <a href="#" class="nav-link active" data-target="home-section">Home</a>
+        <a href="#" class="nav-link" data-target="about-section">How It Works</a>
+        <button class="btn btn-outline" id="login-btn" onclick="showSection('auth-section')">Login / Register</button>
+
+        <!-- Logged in States (Dynamically inserted or shown/hidden) -->
+        <span id="user-greeting" class="user-greeting hidden"></span>
+        <a href="#" class="nav-link hidden" id="dashboard-link" data-target="dashboard-section">Dashboard</a>
+        
+        <!-- Notification Bell -->
+        <div class="notification-bell-container hidden" id="notif-bell">
+          <button class="notif-btn" id="notif-btn-toggle" aria-label="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            <span class="badge hidden" id="notif-count">0</span>
+          </button>
+          <!-- Notification Dropdown -->
+          <div class="notif-dropdown hidden" id="notif-dropdown">
+            <div class="notif-header">
+              <h3>Notifications</h3>
+              <button class="btn-text" id="mark-all-read-btn">Mark all as read</button>
+            </div>
+            <div class="notif-list" id="notif-list">
+              <div class="notif-empty">No notifications yet</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-danger hidden" id="logout-btn">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Notification Toasts (Real-time overlay) -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- 1. LANDING PAGE SECTION -->
+    <section id="home-section" class="app-section active">
+      <div class="hero-section">
+        <div class="hero-content">
+          <span class="badge-tag"><i class="fa-solid fa-leaf"></i> Zero Waste, Zero Hunger</span>
+          <h1 class="hero-title">Connecting surplus food with those who need it.</h1>
+          <p class="hero-subtitle">
+            ShareMeal matches businesses, restaurants, and grocery stores containing surplus fresh food with local charities, NGOs, and food banks. Track every donation from pin-drop to delivery in real-time.
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg" onclick="showRegister('donor')">
+              <i class="fa-solid fa-circle-plus"></i> Donate Surplus Food
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="showRegister('ngo')">
+              <i class="fa-solid fa-hand-holding-heart"></i> NGO Signup
+            </button>
+          </div>
+        </div>
+        <div class="hero-graphic">
+          <div class="glass-card hero-stats-card">
+            <div class="stat-item">
+              <div class="stat-number" id="stat-meals">3,450+</div>
+              <div class="stat-label">Meals Shared</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="stat-donors">48</div>
+              <div class="stat-label">Active Donors</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="stat-ngos">24</div>
+              <div class="stat-label">Verified NGOs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature highlights -->
+      <div class="features-grid">
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+          <h3>Map Coordinates</h3>
+          <p>Pin precise pickup locations. NGOs view nearby available listings on an interactive local map.</p>
+        </div>
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+          <h3>Real-time Alerts</h3>
+          <p>Instant push notifications when food is listed, claimed, or coordinates update.</p>
+        </div>
+        <div class="feature-card glass-card">
+          <div class="feature-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+          <h3>Step-by-Step Tracking</h3>
+          <p>Follow the donation flow live from request, driver assignment, en-route, to final delivery check.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. AUTHENTICATION SECTION (Login & Register) -->
+    <section id="auth-section" class="app-section">
+      <div class="auth-wrapper glass-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+          <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="login-form" class="auth-form active">
+          <h2 class="form-title">Welcome Back</h2>
+          <p class="form-desc">Login to manage your donations or request pickup.</p>
+          
+          <div class="form-group">
+            <label for="login-email"><i class="fa-regular fa-envelope"></i> Email Address</label>
+            <input type="email" id="login-email" required placeholder="name@organization.com">
+          </div>
+
+          <div class="form-group">
+            <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </form>
+
+        <!-- REGISTRATION FORM -->
+        <form id="register-form" class="auth-form">
+          <h2 class="form-title">Join the Network</h2>
+          <p class="form-desc">Register as a Donor (Restaurant/Store) or Receiver (NGO).</p>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-users-gear"></i> Choose Account Type</label>
+            <div class="radio-toggle-group">
+              <input type="radio" id="role-donor" name="reg-role" value="donor" checked>
+              <label for="role-donor">Donor (Business/Individual)</label>
+              
+              <input type="radio" id="role-ngo" name="reg-role" value="ngo">
+              <label for="role-ngo">Receiver (NGO / Charity)</label>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="reg-name"><i class="fa-regular fa-user"></i> Organization/Business Name</label>
+              <input type="text" id="reg-name" required placeholder="e.g. Hope Bakery / Food Bank">
+            </div>
+
+            <div class="form-group">
+              <label for="reg-email"><i class="fa-regular fa-envelope"></i> Email Address</label>
+              <input type="email" id="reg-email" required placeholder="info@company.com">
+            </div>
+
+            <div class="form-group">
+              <label for="reg-phone"><i class="fa-solid fa-phone"></i> Phone Number</label>
+              <input type="tel" id="reg-phone" required placeholder="+1 555-0100">
+            </div>
+
+            <div class="form-group">
+              <label for="reg-password"><i class="fa-solid fa-lock"></i> Password</label>
+              <input type="password" id="reg-password" required placeholder="Minimum 6 characters">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-address"><i class="fa-solid fa-location-dot"></i> Street Address</label>
+            <input type="text" id="reg-address" required placeholder="123 Main St, City, ZIP">
+          </div>
+
+          <!-- Registration Location Map Picker -->
+          <div class="form-group">
+            <label><i class="fa-solid fa-map-pin"></i> Pin Location (Click map to adjust location coordinates)</label>
+            <div class="map-picker-container">
+              <div class="map-wrapper" style="position: relative;">
+                <div id="register-map" class="small-map"></div>
+                <button type="button" class="btn-map-gps" id="btn-reg-gps" title="Turn on current location">
+                  <i class="fa-solid fa-location-crosshairs"></i> Turn on location
+                </button>
+              </div>
+              <div class="coords-row">
+                <span>Lat: <strong id="reg-lat">28.6139</strong></span>
+                <span>Lng: <strong id="reg-lng">77.2090</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. DONOR DASHBOARD -->
+    <section id="donor-dashboard-section" class="app-section">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title">Donor Dashboard</h1>
+          <p class="dashboard-desc" id="donor-welcome-msg">Welcome, Green Garden Café</p>
+        </div>
+        <button class="btn btn-primary" onclick="scrollToElement('new-listing-card')">
+          <i class="fa-solid fa-plus"></i> New Food Listing
+        </button>
+      </div>
+
+      <div class="dashboard-layout">
+        <!-- Left Side: Food Listing Form -->
+        <div class="dashboard-sidebar">
+          <div class="glass-card" id="new-listing-card">
+            <h2 class="card-title"><i class="fa-solid fa-circle-plus"></i> Create Food Listing</h2>
+            <form id="new-listing-form">
+              <div class="form-group">
+                <label for="list-title">Food Item/Title</label>
+                <input type="text" id="list-title" required placeholder="e.g. 10 Pizza Trays, Bagels">
+              </div>
+
+              <div class="form-group">
+                <label for="list-type">Food Category</label>
+                <select id="list-type" required>
+                  <option value="" disabled selected>Select category</option>
+                  <option value="Cooked Meals">Cooked Meals</option>
+                  <option value="Bakery">Bakery / Grain</option>
+                  <option value="Fruits/Vegetables">Fresh Produce</option>
+                  <option value="Dairy/Eggs">Dairy & Eggs</option>
+                  <option value="Canned/Packaged">Canned & Packaged Goods</option>
+                </select>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="list-qty">Quantity</label>
+                  <input type="text" id="list-qty" required placeholder="e.g. 10 kg, 20 boxes">
+                </div>
+                <div class="form-group">
+                  <label for="list-expiry">Expiry Time</label>
+                  <input type="datetime-local" id="list-expiry" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="list-desc">Details / Description</label>
+                <textarea id="list-desc" rows="3" placeholder="Condition, dietary warnings, packaging, storage requirements..."></textarea>
+              </div>
+
+              <!-- Food Image Upload with Camera Access -->
+              <div class="form-group">
+                <label><i class="fa-solid fa-camera"></i> Food Image (Upload or Take Photo)</label>
+                <div class="image-upload-area" id="image-upload-area">
+                  <input type="file" id="list-image" accept="image/*" capture="environment" class="file-input-hidden">
+                  <div class="upload-placeholder" id="upload-placeholder">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p>Click to upload or take a photo</p>
+                    <span class="text-dim text-sm">JPG, PNG, WEBP • Max 5MB</span>
+                  </div>
+                  <div class="upload-preview hidden" id="upload-preview">
+                    <img id="image-preview" src="" alt="Food preview">
+                    <button type="button" class="btn-remove-image" id="remove-image-btn">
+                      <i class="fa-solid fa-xmark"></i> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="list-address">Pickup Address</label>
+                <input type="text" id="list-address" required placeholder="Confirm pickup address">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fa-solid fa-map-pin"></i> Pin Pickup Location (Click map to place pin)</label>
+                <div class="map-picker-container">
+                  <div class="map-wrapper" style="position: relative;">
+                    <div id="listing-map" class="small-map"></div>
+                    <button type="button" class="btn-map-gps" id="btn-list-gps" title="Turn on current location">
+                      <i class="fa-solid fa-location-crosshairs"></i> Turn on location
+                    </button>
+                  </div>
+                  <div class="coords-row">
+                    <span>Lat: <strong id="list-lat">28.6139</strong></span>
+                    <span>Lng: <strong id="list-lng">77.2090</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">Publish Food Listing</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Side: My Listings & Tracking -->
+        <div class="dashboard-main">
+          <!-- Active listings -->
+          <div class="glass-card mb-6">
+            <h2 class="card-title"><i class="fa-solid fa-clipboard-list"></i> My Active Listings & Tracking</h2>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Food Item</th>
+                    <th>Qty / Type</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Tracking / Action</th>
+                  </tr>
+                </thead>
+                <tbody id="donor-listings-tbody">
+                  <!-- Dynamically populated -->
+                  <tr>
+                    <td colspan="5" class="table-empty">Loading listings...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- History listings -->
+          <div class="glass-card">
+            <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Donation History</h2>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Food Item</th>
+                    <th>Qty</th>
+                    <th>Date</th>
+                    <th>Claimed By</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="donor-history-tbody">
+                  <!-- Dynamically populated -->
+                  <tr>
+                    <td colspan="5" class="table-empty">No history found.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. NGO DASHBOARD -->
+    <section id="ngo-dashboard-section" class="app-section">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title">NGO / Receiver Dashboard</h1>
+          <p class="dashboard-desc" id="ngo-welcome-msg">Welcome, Hope Food Bank</p>
+        </div>
+      </div>
+
+      <!-- Main Map Grid (Search & Claim) -->
+      <div class="ngo-map-grid mb-6">
+        <!-- Leaflet Map showing listings -->
+        <div class="glass-card map-card">
+          <div class="card-header-flex">
+            <h2 class="card-title"><i class="fa-solid fa-map-location-dot"></i> Available Food Near You</h2>
+            <span class="badge-pulsing"><i class="fa-solid fa-circle"></i> Live Listings Map</span>
+          </div>
+          <div class="map-wrapper" style="position: relative;">
+            <div id="ngo-listings-map" class="dashboard-map"></div>
+            <button type="button" class="btn-map-gps" id="btn-ngo-gps" title="Turn on current location">
+              <i class="fa-solid fa-location-crosshairs"></i> Turn on location
+            </button>
+          </div>
+        </div>
+
+        <!-- Listing detail sidebar panel (when marker clicked) -->
+        <div class="glass-card detail-panel" id="ngo-detail-panel">
+          <div class="panel-empty" id="panel-empty-state">
+            <i class="fa-solid fa-hand-pointer"></i>
+            <h3>Select a map pin or feed item</h3>
+            <p>Click on any marker or list card to view full description, distance, and request pickup.</p>
+          </div>
+          
+          <div class="panel-content hidden" id="panel-active-state">
+            <!-- Food Image Display -->
+            <div class="panel-food-image-container hidden" id="panel-image-container">
+              <img id="panel-food-image" class="panel-food-image" src="" alt="Food image">
+            </div>
+            <span class="category-badge" id="panel-food-type">Bakery</span>
+            <h2 id="panel-title" class="panel-title">Fresh Sourdough Bread</h2>
+            
+            <div class="panel-meta">
+              <div class="meta-item">
+                <i class="fa-solid fa-box"></i>
+                <div>
+                  <span class="meta-lbl">Quantity</span>
+                  <span id="panel-quantity" class="meta-val">15 loaves</span>
+                </div>
+              </div>
+              <div class="meta-item">
+                <i class="fa-regular fa-clock"></i>
+                <div>
+                  <span class="meta-lbl">Expiry</span>
+                  <span id="panel-expiry" class="meta-val">In 12 hours</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-section">
+              <h4>Donor Details</h4>
+              <p><strong id="panel-donor-name">Green Garden Cafe</strong></p>
+              <p class="text-sm"><i class="fa-solid fa-location-dot"></i> <span id="panel-address">123 Green St, Downtown</span></p>
+            </div>
+
+            <div class="panel-section">
+              <h4>Description</h4>
+              <p id="panel-desc" class="panel-desc-text">Surplus bread baked daily...</p>
+            </div>
+
+            <!-- Request Form inside panel -->
+            <form id="request-pickup-form" class="panel-action-form">
+              <input type="hidden" id="request-listing-id">
+              <div class="form-group">
+                <label for="pickup-time">Target Pickup Date & Time</label>
+                <input type="datetime-local" id="pickup-time" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-truck"></i> Request Pickup Now
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lower Grid: Feed and Active Tracking -->
+      <div class="dashboard-layout">
+        <!-- Available Feed -->
+        <div class="dashboard-sidebar">
+          <div class="glass-card">
+            <h2 class="card-title"><i class="fa-solid fa-list-ul"></i> Food Listings Feed</h2>
+            <div class="listings-feed-container" id="ngo-listings-feed">
+              <!-- Dynamically populated list of available food cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- NGO Active Claims & Tracking -->
+        <div class="dashboard-main">
+          <div class="glass-card">
+            <h2 class="card-title"><i class="fa-solid fa-truck-fast"></i> Active Pickups & Live Tracking</h2>
+            <div class="active-pickups-container" id="ngo-active-pickups">
+              <!-- Dynamically populated trackers -->
+              <div class="empty-state">
+                <i class="fa-solid fa-route"></i>
+                <p>No active pickup requests. Browse the map and request surplus food above!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. LIVE TRACKING DETAIL OVERLAY / POPUP -->
+    <div class="modal-backdrop hidden" id="tracking-modal">
+      <div class="modal-card glass-card">
+        <button class="modal-close-btn" id="close-tracking-modal"><i class="fa-solid fa-xmark"></i></button>
+        
+        <h2 class="modal-title">Live Donation Tracker</h2>
+        <span class="tracking-item-title" id="track-item-title">Freshly Baked Sourdough Bread</span>
+        
+        <!-- Interactive tracker bar -->
+        <div class="tracking-timeline" id="tracking-timeline-bar">
+          <div class="timeline-step" id="step-available">
+            <div class="step-icon"><i class="fa-solid fa-box"></i></div>
+            <div class="step-name">Listed</div>
+          </div>
+          <div class="timeline-step" id="step-requested">
+            <div class="step-icon"><i class="fa-solid fa-bell"></i></div>
+            <div class="step-name">Requested</div>
+          </div>
+          <div class="timeline-step" id="step-picked_up">
+            <div class="step-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+            <div class="step-name">En Route</div>
+          </div>
+          <div class="timeline-step" id="step-delivered">
+            <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="step-name">Delivered</div>
+          </div>
+        </div>
+
+        <!-- Info details grid -->
+        <div class="tracking-info-grid">
+          <div>
+            <h4>Donor (Origin)</h4>
+            <p id="track-donor-name">Green Garden Café</p>
+            <p class="text-sm text-dim" id="track-donor-address">123 Green St, Downtown</p>
+          </div>
+          <div>
+            <h4>Receiver NGO (Destination)</h4>
+            <p id="track-ngo-name">Hope Food Bank</p>
+            <p class="text-sm text-dim" id="track-ngo-address">789 Charity Rd, North Side</p>
+          </div>
+          <div>
+            <h4>Food Info</h4>
+            <p id="track-food-qty">15 loaves</p>
+            <p class="text-sm text-dim" id="track-food-expiry">Expires: 2026-06-16</p>
+          </div>
+          <div>
+            <h4>Pickup Details</h4>
+            <p id="track-scheduled-time">Today, 2:00 PM</p>
+            <p class="text-sm text-dim" id="track-status-badge">Status: Requested</p>
+          </div>
+        </div>
+
+        <!-- Live map between coordinates -->
+        <div class="tracking-map-container">
+          <div id="tracking-route-map" style="height: 250px; border-radius: 8px;"></div>
+        </div>
+
+        <!-- Action Panel (Depends on role and state) -->
+        <div class="tracking-actions" id="tracking-action-panel">
+          <!-- Dynamically populated buttons (e.g. Driver "Mark Picked Up", "Mark Delivered") -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2026 ShareMeal Network. Saving fresh surplus food, connecting communities.</p>
+    </div>
+  </footer>
+
+  <!-- Main Frontend App Script -->
+  <script src="app.js"></script>
+  <!-- Automated Browser Test Suite -->
+  <script src="test_suite.js"></script>
+</body>
+</html>
