@@ -573,12 +573,25 @@ function renderNotificationsList() {
   }
 
   notifList.innerHTML = userNotifications.map(n => `
-    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markOneAsRead('${n.id}')">
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="handleNotificationClick('${n.id}', '${n.listingId || ''}')">
       <p>${escapeHtml(n.message)}</p>
       <span class="notif-time">${formatTimeAgo(n.createdAt)}</span>
     </div>
   `).join('');
 }
+
+window.handleNotificationClick = async function(notifId, listingId) {
+  markOneAsRead(notifId);
+
+  if (listingId && currentUser && currentUser.role === 'ngo') {
+    showSection('ngo-dashboard-section');
+    setTimeout(() => {
+      selectListingFromFeed(listingId);
+      const panel = document.getElementById('ngo-detail-panel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth' });
+    }, 200);
+  }
+};
 
 async function markNotificationsAsRead() {
   if (!currentUser) return;
@@ -618,6 +631,18 @@ async function loadDashboardData() {
   }
 }
 
+// Send live notification when food is ready for pickup
+window.sendReadyNotification = async function(listingId) {
+  try {
+    await apiFetch(`/api/listings/${listingId}/ready`, {
+      method: 'POST'
+    });
+    showToast('Alert Sent', 'Notified nearby NGOs that this listing is ready for pickup.', 'success');
+  } catch (err) {
+    showToast('Notification Error', err.message, 'danger');
+  }
+};
+
 // --- DONOR WORKFLOWS ---
 function renderDonorDashboard() {
   const listingsTable = document.getElementById('donor-listings-tbody');
@@ -635,7 +660,9 @@ function renderDonorDashboard() {
       
       let actionHtml = '';
       if (l.status === 'available') {
-        actionHtml = `<span class="text-dim">Waiting for NGO...</span>`;
+        actionHtml = `<button class="btn btn-primary text-sm" onclick="sendReadyNotification('${l.id}')">
+          <i class="fa-solid fa-bell"></i> Notify NGOs Ready
+        </button>`;
       } else {
         actionHtml = `<button class="btn btn-secondary btn-outline text-sm" onclick="openTrackingModal('${l.id}', '${pickup ? pickup.id : ''}')">
           <i class="fa-solid fa-location-crosshairs"></i> Track Live
@@ -1678,6 +1705,26 @@ function handleSimulatedRequest(url, options) {
       triggerSimulatedSocketAlert(newNotif);
       return newL;
     }
+  }
+
+  if (url.startsWith('/api/listings/') && url.endsWith('/ready')) {
+    const parts = url.split('/');
+    const listingId = parts[3];
+    const l = listings.find(item => item.id === listingId);
+    if (!l) throw new Error('Listing not found');
+
+    const newNotif = {
+      id: `n_${Date.now()}`,
+      userId: 'all',
+      message: `Donation Ready: "${l.title}" is ready for pickup at ${l.donorName}! Click to claim.`,
+      read: false,
+      createdAt: new Date().toISOString(),
+      listingId: l.id
+    };
+    notifs.unshift(newNotif);
+    localStorage.setItem('sharemeal_sim_notifications', JSON.stringify(notifs));
+    triggerSimulatedSocketAlert(newNotif);
+    return { success: true };
   }
 
   if (url === '/api/pickups') {

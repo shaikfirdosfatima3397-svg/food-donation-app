@@ -45,7 +45,8 @@ function sendNotification(targetUserId, targetRole, messageText, extraData = {})
   // Fire-and-forget save notification in PostgreSQL and broadcast to sockets
   db.notifications.create({
     userId: dbUserId,
-    message: messageText
+    message: messageText,
+    listingId: extraData.listingId || null
   }).then((notification) => {
     clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -178,6 +179,29 @@ app.post('/api/listings', async (req, res) => {
   } catch (err) {
     console.error("Listing creation error:", err);
     res.status(500).json({ error: 'Server failed to create listing' });
+  }
+});
+
+// 4b. Listings: Broadcast ready status
+app.post('/api/listings/:id/ready', async (req, res) => {
+  const listingId = req.params.id;
+  try {
+    const listing = await db.listings.getById(listingId);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    sendNotification(
+      null,
+      'ngo',
+      `Donation Ready: "${listing.title}" is ready for pickup at ${listing.donorName}! Click to claim.`,
+      { listingId: listing.id }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Listing ready notification error:", err);
+    res.status(500).json({ error: 'Server failed to send notification' });
   }
 });
 

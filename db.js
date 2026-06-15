@@ -73,7 +73,8 @@ const initDb = async () => {
         user_id VARCHAR(50) NOT NULL,
         message TEXT NOT NULL,
         read BOOLEAN DEFAULT FALSE,
-        created_at VARCHAR(50) NOT NULL
+        created_at VARCHAR(50) NOT NULL,
+        listing_id VARCHAR(50)
       )
     `);
 
@@ -255,15 +256,15 @@ const dbOperations = {
   notifications: {
     getByUserId: async (userId) => {
       const { rows } = await pool.query("SELECT * FROM notifications WHERE user_id = $1 OR user_id = 'all' ORDER BY created_at DESC", [userId]);
-      return rows.map(n => ({ id: n.id, userId: n.user_id, message: n.message, read: n.read, createdAt: n.created_at }));
+      return rows.map(n => ({ id: n.id, userId: n.user_id, message: n.message, read: n.read, createdAt: n.created_at, listingId: n.listing_id }));
     },
     create: async (notification) => {
       const id = `n_${Date.now()}`;
       const createdAt = new Date().toISOString();
       await pool.query(`
-        INSERT INTO notifications (id, user_id, message, read, created_at)
-        VALUES ($1, $2, $3, $4, $5)
-      `, [id, notification.userId || 'all', notification.message, false, createdAt]);
+        INSERT INTO notifications (id, user_id, message, read, created_at, listing_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [id, notification.userId || 'all', notification.message, false, createdAt, notification.listingId || null]);
       return { id, read: false, createdAt, ...notification };
     },
     markAllAsRead: async (userId) => {
