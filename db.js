@@ -1,290 +1,278 @@
-const fs = require('fs');
-const path = require('path');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
-const DB_FILE = path.join(__dirname, 'db.json');
+// Connection string from environment variable or user's Singapore Render PostgreSQL URI
+const connectionString = process.env.DATABASE_URL || 'postgresql://hgs:T5DdPFtwrDjdB5yfqC7eSlgmTxR9FuNa@dpg-d8o0etj7uimc73aaiv4g-a.singapore-postgres.render.com/db_kfhc';
 
-// Initial Seed Data
-const getSeedData = () => {
-  const salt = bcrypt.genSaltSync(10);
-  const donorHash = bcrypt.hashSync('donor123', salt);
-  const ngoHash = bcrypt.hashSync('ngo123', salt);
-
-  const users = [
-    {
-      id: "u_donor_1",
-      email: "garden@cafe.com",
-      passwordHash: donorHash,
-      name: "Green Garden Café",
-      role: "donor",
-      phone: "+91 98765 43210",
-      address: "H-Block, Connaught Place, New Delhi",
-      lat: 28.6304,
-      lng: 77.2177
-    },
-    {
-      id: "u_donor_2",
-      email: "fresh@market.com",
-      passwordHash: donorHash,
-      name: "Fresh Mart Supermarket",
-      role: "donor",
-      phone: "+91 98765 01234",
-      address: "Karol Bagh Metro Station, New Delhi",
-      lat: 28.6448,
-      lng: 77.1873
-    },
-    {
-      id: "u_ngo_1",
-      email: "hope@foodbank.org",
-      passwordHash: ngoHash,
-      name: "Hope Food Bank",
-      role: "ngo",
-      phone: "+91 99999 11111",
-      address: "Rajendra Place District Centre, New Delhi",
-      lat: 28.6421,
-      lng: 77.1782
-    },
-    {
-      id: "u_ngo_2",
-      email: "share@care.org",
-      passwordHash: ngoHash,
-      name: "Care & Share Foundation",
-      role: "ngo",
-      phone: "+91 88888 22222",
-      address: "KG Marg, Near India Gate, New Delhi",
-      lat: 28.6129,
-      lng: 77.2295
-    }
-  ];
-
-  const listings = [
-    {
-      id: "l_1",
-      donorId: "u_donor_1",
-      donorName: "Green Garden Café",
-      donorPhone: "+91 98765 43210",
-      donorEmail: "garden@cafe.com",
-      title: "Freshly Baked Sourdough Bread",
-      description: "15 loaves of artisanal sourdough bread baked this morning. Perfect condition, unsold stock.",
-      quantity: "15 loaves",
-      expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-      foodType: "Bakery",
-      status: "available",
-      address: "H-Block, Connaught Place, New Delhi",
-      lat: 28.6304,
-      lng: 77.2177,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
-    },
-    {
-      id: "l_2",
-      donorId: "u_donor_2",
-      donorName: "Fresh Mart Supermarket",
-      donorPhone: "+91 98765 01234",
-      donorEmail: "fresh@market.com",
-      title: "Assorted Organic Apples & Bananas",
-      description: "Around 12kg of ripe organic fruits. Packaged nicely, ready for distribution.",
-      quantity: "12 kg",
-      expiryTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-      foodType: "Fruits/Vegetables",
-      status: "requested",
-      address: "Karol Bagh Metro Station, New Delhi",
-      lat: 28.6448,
-      lng: 77.1873,
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "l_3",
-      donorId: "u_donor_1",
-      donorName: "Green Garden Café",
-      donorPhone: "+91 98765 43210",
-      donorEmail: "garden@cafe.com",
-      title: "Vegetarian Pasta Trays",
-      description: "5 trays of warm vegetable penne pasta. Surplus from a lunch corporate event. Kept in food-grade warmers.",
-      quantity: "5 trays (approx. 25 servings)",
-      expiryTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-      foodType: "Cooked Meals",
-      status: "delivered",
-      address: "H-Block, Connaught Place, New Delhi",
-      lat: 28.6304,
-      lng: 77.2177,
-      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-
-  const pickups = [
-    {
-      id: "p_1",
-      listingId: "l_2",
-      ngoId: "u_ngo_1",
-      ngoName: "Hope Food Bank",
-      status: "requested",
-      scheduledTime: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date(Date.now() - 3.5 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "p_2",
-      listingId: "l_3",
-      ngoId: "u_ngo_2",
-      ngoName: "Care & Share Foundation",
-      status: "delivered",
-      scheduledTime: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-
-  const notifications = [
-    {
-      id: "n_1",
-      userId: "u_ngo_1",
-      message: "New Food Listing: 'Freshly Baked Sourdough Bread' was posted nearby!",
-      read: false,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: "n_2",
-      userId: "u_donor_2",
-      message: "Hope Food Bank has requested a pickup for your listing 'Assorted Organic Apples & Bananas'.",
-      read: false,
-      createdAt: new Date(Date.now() - 3.5 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-
-  return { users, listings, pickups, notifications };
-};
-
-// Database state holding in-memory cache
-let db = {
-  users: [],
-  listings: [],
-  pickups: [],
-  notifications: []
-};
-
-// Load database from file or create it from seed data
-const initDb = () => {
-  if (fs.existsSync(DB_FILE)) {
-    try {
-      const raw = fs.readFileSync(DB_FILE, 'utf8');
-      db = JSON.parse(raw);
-      console.log('Database loaded successfully from', DB_FILE);
-    } catch (e) {
-      console.error('Error loading database, resetting with seed data:', e);
-      resetDb();
-    }
-  } else {
-    resetDb();
+// Configure connection pool with SSL enabled (required for Render)
+const pool = new Pool({
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false
   }
-};
+});
 
-const resetDb = () => {
-  db = getSeedData();
-  saveDb();
-  console.log('Database initialized with seed data.');
-};
-
-const saveDb = () => {
+// Setup Table schema creation queries
+const initDb = async () => {
+  const client = await pool.connect();
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
-  } catch (e) {
-    console.error('Error writing database to disk:', e);
+    // 1. Users table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(50) PRIMARY KEY,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(100) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        role VARCHAR(20) NOT NULL,
+        phone VARCHAR(30) NOT NULL,
+        address VARCHAR(255) NOT NULL,
+        lat DOUBLE PRECISION NOT NULL,
+        lng DOUBLE PRECISION NOT NULL
+      )
+    `);
+
+    // 2. Listings table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS listings (
+        id VARCHAR(50) PRIMARY KEY,
+        donor_id VARCHAR(50) NOT NULL,
+        donor_name VARCHAR(100) NOT NULL,
+        donor_phone VARCHAR(30),
+        donor_email VARCHAR(100),
+        title VARCHAR(150) NOT NULL,
+        description TEXT,
+        quantity VARCHAR(50) NOT NULL,
+        expiry_time VARCHAR(50) NOT NULL,
+        food_type VARCHAR(50) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        address VARCHAR(255) NOT NULL,
+        lat DOUBLE PRECISION NOT NULL,
+        lng DOUBLE PRECISION NOT NULL,
+        image_base64 TEXT,
+        created_at VARCHAR(50) NOT NULL
+      )
+    `);
+
+    // 3. Pickups table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pickups (
+        id VARCHAR(50) PRIMARY KEY,
+        listing_id VARCHAR(50) NOT NULL,
+        ngo_id VARCHAR(50) NOT NULL,
+        ngo_name VARCHAR(100) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        scheduled_time VARCHAR(50) NOT NULL,
+        created_at VARCHAR(50) NOT NULL
+      )
+    `);
+
+    // 4. Notifications table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        read BOOLEAN DEFAULT FALSE,
+        created_at VARCHAR(50) NOT NULL
+      )
+    `);
+
+    console.log("PostgreSQL Database tables verified/initialized.");
+
+    // Seed default users if empty
+    const { rows } = await client.query("SELECT COUNT(*) FROM users");
+    if (parseInt(rows[0].count) === 0) {
+      console.log("Seeding default users...");
+      const salt = bcrypt.genSaltSync(10);
+      const donorHash = bcrypt.hashSync('donor123', salt);
+      const ngoHash = bcrypt.hashSync('ngo123', salt);
+
+      const SEED_USERS = [
+        ["u_donor_1", "garden@cafe.com", donorHash, "Green Garden Café", "donor", "+91 98765 43210", "H-Block, Connaught Place, New Delhi", 28.6304, 77.2177],
+        ["u_donor_2", "fresh@market.com", donorHash, "Fresh Mart Supermarket", "donor", "+91 98765 01234", "Karol Bagh Metro Station, New Delhi", 28.6448, 77.1873],
+        ["u_ngo_1", "hope@foodbank.org", ngoHash, "Hope Food Bank", "ngo", "+91 99999 11111", "Rajendra Place District Centre, New Delhi", 28.6421, 77.1782],
+        ["u_ngo_2", "share@care.org", ngoHash, "Care & Share Foundation", "ngo", "+91 88888 22222", "KG Marg, Near India Gate, New Delhi", 28.6129, 77.2295]
+      ];
+
+      for (const user of SEED_USERS) {
+        await client.query(`
+          INSERT INTO users (id, email, password_hash, name, role, phone, address, lat, lng)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, user);
+      }
+      console.log("Default users seeded.");
+    }
+
+    // Seed default listings if empty
+    const resListings = await client.query("SELECT COUNT(*) FROM listings");
+    if (parseInt(resListings[0].count) === 0) {
+      console.log("Seeding default listings...");
+      const SEED_LISTINGS = [
+        ["l_1", "u_donor_1", "Green Garden Café", "+91 98765 43210", "garden@cafe.com", "Freshly Baked Sourdough Bread", "15 loaves of artisanal sourdough bread baked this morning. Perfect condition, unsold stock.", "15 loaves", new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), "Bakery", "available", "H-Block, Connaught Place, New Delhi", 28.6304, 77.2177, null, new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()],
+        ["l_2", "u_donor_2", "Fresh Mart Supermarket", "+91 98765 01234", "fresh@market.com", "Assorted Organic Apples & Bananas", "Around 12kg of ripe organic fruits. Packaged nicely, ready for distribution.", "12 kg", new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), "Fruits/Vegetables", "requested", "Karol Bagh Metro Station, New Delhi", 28.6448, 77.1873, null, new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()],
+        ["l_3", "u_donor_1", "Green Garden Café", "+91 98765 43210", "garden@cafe.com", "Vegetarian Pasta Trays", "5 trays of warm vegetable penne pasta. Surplus from a lunch corporate event.", "5 trays (approx. 25 servings)", new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), "Cooked Meals", "delivered", "H-Block, Connaught Place, New Delhi", 28.6304, 77.2177, null, new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()]
+      ];
+
+      for (const listing of SEED_LISTINGS) {
+        await client.query(`
+          INSERT INTO listings (id, donor_id, donor_name, donor_phone, donor_email, title, description, quantity, expiry_time, food_type, status, address, lat, lng, image_base64, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        `, listing);
+      }
+      console.log("Default listings seeded.");
+    }
+
+    // Seed default pickups if empty
+    const resPickups = await client.query("SELECT COUNT(*) FROM pickups");
+    if (parseInt(resPickups[0].count) === 0) {
+      console.log("Seeding default pickups...");
+      const SEED_PICKUPS = [
+        ["p_1", "l_2", "u_ngo_1", "Hope Food Bank", "requested", new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), new Date(Date.now() - 3.5 * 60 * 60 * 1000).toISOString()],
+        ["p_2", "l_3", "u_ngo_2", "Care & Share Foundation", "delivered", new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString()]
+      ];
+
+      for (const pickup of SEED_PICKUPS) {
+        await client.query(`
+          INSERT INTO pickups (id, listing_id, ngo_id, ngo_name, status, scheduled_time, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, pickup);
+      }
+      console.log("Default pickups seeded.");
+    }
+
+  } catch (err) {
+    console.error("Database initialization error:", err);
+  } finally {
+    client.release();
   }
 };
 
-// Database Methods
+// Database operation helper methods mapped to Postgres queries
 const dbOperations = {
   users: {
-    getAll: () => db.users,
-    findByEmail: (email) => db.users.find(u => u.email.toLowerCase() === email.toLowerCase()),
-    findById: (id) => db.users.find(u => u.id === id),
-    create: (user) => {
-      const newUser = { id: `u_${Date.now()}`, ...user };
-      db.users.push(newUser);
-      saveDb();
-      return newUser;
+    findByEmail: async (email) => {
+      const { rows } = await pool.query("SELECT * FROM users WHERE LOWER(email) = LOWER($1)", [email]);
+      if (rows.length === 0) return null;
+      const u = rows[0];
+      return { id: u.id, email: u.email, passwordHash: u.password_hash, name: u.name, role: u.role, phone: u.phone, address: u.address, lat: u.lat, lng: u.lng };
+    },
+    findById: async (id) => {
+      const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+      if (rows.length === 0) return null;
+      const u = rows[0];
+      return { id: u.id, email: u.email, passwordHash: u.password_hash, name: u.name, role: u.role, phone: u.phone, address: u.address, lat: u.lat, lng: u.lng };
+    },
+    getAll: async () => {
+      const { rows } = await pool.query("SELECT * FROM users");
+      return rows.map(u => ({ id: u.id, email: u.email, name: u.name, role: u.role, phone: u.phone, address: u.address, lat: u.lat, lng: u.lng }));
+    },
+    create: async (user) => {
+      const id = `u_${Date.now()}`;
+      await pool.query(`
+        INSERT INTO users (id, email, password_hash, name, role, phone, address, lat, lng)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `, [id, user.email, user.passwordHash, user.name, user.role, user.phone, user.address, Number(user.lat), Number(user.lng)]);
+      return { id, ...user };
     }
   },
   listings: {
-    getAll: () => db.listings,
-    getById: (id) => db.listings.find(l => l.id === id),
-    create: (listing) => {
-      const newListing = {
-        id: `l_${Date.now()}`,
-        status: 'available',
-        createdAt: new Date().toISOString(),
-        ...listing
-      };
-      db.listings.push(newListing);
-      saveDb();
-      return newListing;
+    getAll: async () => {
+      const { rows } = await pool.query("SELECT * FROM listings ORDER BY created_at DESC");
+      return rows.map(l => ({
+        id: l.id, donorId: l.donor_id, donorName: l.donor_name, donorPhone: l.donor_phone, donorEmail: l.donor_email,
+        title: l.title, description: l.description, quantity: l.quantity, expiryTime: l.expiry_time,
+        foodType: l.food_type, status: l.status, address: l.address, lat: l.lat, lng: l.lng,
+        imageBase64: l.image_base64, createdAt: l.created_at
+      }));
     },
-    updateStatus: (id, status) => {
-      const listing = db.listings.find(l => l.id === id);
-      if (listing) {
-        listing.status = status;
-        saveDb();
-      }
-      return listing;
+    getById: async (id) => {
+      const { rows } = await pool.query("SELECT * FROM listings WHERE id = $1", [id]);
+      if (rows.length === 0) return null;
+      const l = rows[0];
+      return {
+        id: l.id, donorId: l.donor_id, donorName: l.donor_name, donorPhone: l.donor_phone, donorEmail: l.donor_email,
+        title: l.title, description: l.description, quantity: l.quantity, expiryTime: l.expiry_time,
+        foodType: l.food_type, status: l.status, address: l.address, lat: l.lat, lng: l.lng,
+        imageBase64: l.image_base64, createdAt: l.created_at
+      };
+    },
+    create: async (listing) => {
+      const id = `l_${Date.now()}`;
+      const createdAt = new Date().toISOString();
+      await pool.query(`
+        INSERT INTO listings (id, donor_id, donor_name, donor_phone, donor_email, title, description, quantity, expiry_time, food_type, status, address, lat, lng, image_base64, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      `, [id, listing.donorId, listing.donorName, listing.donorPhone, listing.donorEmail, listing.title, listing.description || '', listing.quantity, listing.expiryTime, listing.foodType, 'available', listing.address, Number(listing.lat), Number(listing.lng), listing.imageBase64 || null, createdAt]);
+      return { id, status: 'available', createdAt, ...listing };
+    },
+    updateStatus: async (id, status) => {
+      await pool.query("UPDATE listings SET status = $1 WHERE id = $2", [status, id]);
+      return { id, status };
     }
   },
   pickups: {
-    getAll: () => db.pickups,
-    getById: (id) => db.pickups.find(p => p.id === id),
-    getByListingId: (listingId) => db.pickups.find(p => p.listingId === listingId),
-    create: (pickup) => {
-      const newPickup = {
-        id: `p_${Date.now()}`,
-        status: 'requested',
-        createdAt: new Date().toISOString(),
-        ...pickup
-      };
-      db.pickups.push(newPickup);
-      // update listing status to requested
-      const listing = db.listings.find(l => l.id === pickup.listingId);
-      if (listing) {
-        listing.status = 'requested';
-      }
-      saveDb();
-      return newPickup;
+    getAll: async () => {
+      const { rows } = await pool.query("SELECT * FROM pickups ORDER BY created_at DESC");
+      return rows.map(p => ({
+        id: p.id, listingId: p.listing_id, ngoId: p.ngo_id, ngoName: p.ngo_name,
+        status: p.status, scheduledTime: p.scheduled_time, createdAt: p.created_at
+      }));
     },
-    updateStatus: (id, status) => {
-      const pickup = db.pickups.find(p => p.id === id);
-      if (pickup) {
-        pickup.status = status;
-        // Keep the listing status synced
-        const listing = db.listings.find(l => l.id === pickup.listingId);
-        if (listing) {
-          listing.status = status; // e.g. 'picked_up', 'delivered'
-        }
-        saveDb();
+    getById: async (id) => {
+      const { rows } = await pool.query("SELECT * FROM pickups WHERE id = $1", [id]);
+      if (rows.length === 0) return null;
+      const p = rows[0];
+      return {
+        id: p.id, listingId: p.listing_id, ngoId: p.ngo_id, ngoName: p.ngo_name,
+        status: p.status, scheduledTime: p.scheduled_time, createdAt: p.created_at
+      };
+    },
+    create: async (pickup) => {
+      const id = `p_${Date.now()}`;
+      const createdAt = new Date().toISOString();
+      // 1. Insert pickup
+      await pool.query(`
+        INSERT INTO pickups (id, listing_id, ngo_id, ngo_name, status, scheduled_time, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [id, pickup.listingId, pickup.ngoId, pickup.ngoName, 'requested', pickup.scheduledTime, createdAt]);
+      
+      // 2. Sync listing status
+      await pool.query("UPDATE listings SET status = 'requested' WHERE id = $1", [pickup.listingId]);
+      
+      return { id, status: 'requested', createdAt, ...pickup };
+    },
+    updateStatus: async (id, status) => {
+      // 1. Update pickup status
+      const { rows } = await pool.query("UPDATE pickups SET status = $1 WHERE id = $2 RETURNING listing_id", [status, id]);
+      if (rows.length > 0) {
+        const listingId = rows[0].listing_id;
+        // 2. Sync listing status
+        await pool.query("UPDATE listings SET status = $1 WHERE id = $2", [status, listingId]);
       }
-      return pickup;
+      return { id, status };
     }
   },
   notifications: {
-    getByUserId: (userId) => db.notifications.filter(n => n.userId === userId || n.userId === 'all'),
-    create: (notification) => {
-      const newNotification = {
-        id: `n_${Date.now()}`,
-        read: false,
-        createdAt: new Date().toISOString(),
-        ...notification
-      };
-      db.notifications.unshift(newNotification); // Newer notifications first
-      saveDb();
-      return newNotification;
+    getByUserId: async (userId) => {
+      const { rows } = await pool.query("SELECT * FROM notifications WHERE user_id = $1 OR user_id = 'all' ORDER BY created_at DESC", [userId]);
+      return rows.map(n => ({ id: n.id, userId: n.user_id, message: n.message, read: n.read, createdAt: n.created_at }));
     },
-    markAllAsRead: (userId) => {
-      db.notifications.forEach(n => {
-        if (n.userId === userId || n.userId === 'all') {
-          n.read = true;
-        }
-      });
-      saveDb();
+    create: async (notification) => {
+      const id = `n_${Date.now()}`;
+      const createdAt = new Date().toISOString();
+      await pool.query(`
+        INSERT INTO notifications (id, user_id, message, read, created_at)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [id, notification.userId || 'all', notification.message, false, createdAt]);
+      return { id, read: false, createdAt, ...notification };
+    },
+    markAllAsRead: async (userId) => {
+      await pool.query("UPDATE notifications SET read = TRUE WHERE user_id = $1 OR user_id = 'all'", [userId]);
     }
   }
 };
 
-// Initialize DB on file load
+// Run initialization
 initDb();
 
 module.exports = dbOperations;
