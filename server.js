@@ -129,7 +129,7 @@ app.get('/api/listings', (req, res) => {
 
 // 4. Listings: Create new
 app.post('/api/listings', (req, res) => {
-  const { donorId, donorName, title, description, quantity, expiryTime, foodType, lat, lng, address } = req.body;
+  const { donorId, donorName, donorPhone, donorEmail, title, description, quantity, expiryTime, foodType, lat, lng, address } = req.body;
 
   if (!donorId || !title || !quantity || !expiryTime || !foodType || !address) {
     return res.status(400).json({ error: 'Missing listing information' });
@@ -138,6 +138,8 @@ app.post('/api/listings', (req, res) => {
   const newListing = db.listings.create({
     donorId,
     donorName,
+    donorPhone: donorPhone || '',
+    donorEmail: donorEmail || '',
     title,
     description: description || '',
     quantity,

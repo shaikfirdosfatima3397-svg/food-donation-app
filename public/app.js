@@ -687,6 +687,8 @@ async function handleNewListing(e) {
   const payload = {
     donorId: currentUser.id,
     donorName: currentUser.name,
+    donorPhone: currentUser.phone || '',
+    donorEmail: currentUser.email || '',
     title,
     foodType,
     quantity,
@@ -813,6 +815,10 @@ function renderNgoDashboard() {
               <span class="text-dim">Scheduled:</span>
               <strong>${formatDate(p.scheduledTime)}</strong>
             </div>
+            <div style="grid-column: span 2; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 4px;">
+              <span class="text-dim"><i class="fa-solid fa-phone"></i> Contact:</span>
+              <strong>${escapeHtml(listing.donorPhone || 'N/A')} | ${escapeHtml(listing.donorEmail || 'N/A')}</strong>
+            </div>
           </div>
           <div style="display:flex; justify-content:flex-end;">
             <button class="btn btn-primary text-sm" onclick="openTrackingModal('${listing.id}', '${p.id}')">
@@ -845,6 +851,8 @@ function selectListingFromFeed(listingId) {
   document.getElementById('panel-expiry').textContent = formatDate(listing.expiryTime);
   document.getElementById('panel-donor-name').textContent = listing.donorName;
   document.getElementById('panel-address').textContent = listing.address;
+  document.getElementById('panel-donor-phone').textContent = listing.donorPhone || 'N/A';
+  document.getElementById('panel-donor-email').textContent = listing.donorEmail || 'N/A';
   document.getElementById('panel-desc').textContent = listing.description || 'No description provided';
   document.getElementById('request-listing-id').value = listingId;
 
@@ -915,6 +923,10 @@ function openTrackingModal(listingId, pickupId) {
   document.getElementById('track-item-title').textContent = listing.title;
   document.getElementById('track-donor-name').textContent = listing.donorName;
   document.getElementById('track-donor-address').textContent = listing.address;
+  document.getElementById('track-donor-contact').innerHTML = `
+    <i class="fa-solid fa-phone"></i> ${escapeHtml(listing.donorPhone || 'N/A')} <br>
+    <i class="fa-solid fa-envelope"></i> ${escapeHtml(listing.donorEmail || 'N/A')}
+  `;
   document.getElementById('track-food-qty').textContent = listing.quantity;
   document.getElementById('track-food-expiry').textContent = `Expiry: ${formatDate(listing.expiryTime)}`;
 
@@ -1589,9 +1601,9 @@ const SEED_USERS = [
 ];
 
 const SEED_LISTINGS = [
-  { id: "l_1", donorId: "u_donor_1", donorName: "Green Garden Café", title: "Freshly Baked Sourdough Bread", description: "15 loaves of artisanal sourdough bread baked this morning. Perfect condition, unsold stock.", quantity: "15 loaves", expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), foodType: "Bakery", status: "available", address: "H-Block, Connaught Place, New Delhi", lat: 28.6304, lng: 77.2177, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: "l_2", donorId: "u_donor_2", donorName: "Fresh Mart Supermarket", title: "Assorted Organic Apples & Bananas", description: "Around 12kg of ripe organic fruits. Packaged nicely, ready for distribution.", quantity: "12 kg", expiryTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), foodType: "Fruits/Vegetables", status: "requested", address: "Karol Bagh Metro Station, New Delhi", lat: 28.6448, lng: 77.1873, createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
-  { id: "l_3", donorId: "u_donor_1", donorName: "Green Garden Café", title: "Vegetarian Pasta Trays", description: "5 trays of warm vegetable penne pasta. Surplus from a lunch corporate event.", quantity: "5 trays (approx. 25 servings)", expiryTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), foodType: "Cooked Meals", status: "delivered", address: "H-Block, Connaught Place, New Delhi", lat: 28.6304, lng: 77.2177, createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() }
+  { id: "l_1", donorId: "u_donor_1", donorName: "Green Garden Café", donorPhone: "+91 98765 43210", donorEmail: "garden@cafe.com", title: "Freshly Baked Sourdough Bread", description: "15 loaves of artisanal sourdough bread baked this morning. Perfect condition, unsold stock.", quantity: "15 loaves", expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), foodType: "Bakery", status: "available", address: "H-Block, Connaught Place, New Delhi", lat: 28.6304, lng: 77.2177, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+  { id: "l_2", donorId: "u_donor_2", donorName: "Fresh Mart Supermarket", donorPhone: "+91 98765 01234", donorEmail: "fresh@market.com", title: "Assorted Organic Apples & Bananas", description: "Around 12kg of ripe organic fruits. Packaged nicely, ready for distribution.", quantity: "12 kg", expiryTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), foodType: "Fruits/Vegetables", status: "requested", address: "Karol Bagh Metro Station, New Delhi", lat: 28.6448, lng: 77.1873, createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
+  { id: "l_3", donorId: "u_donor_1", donorName: "Green Garden Café", donorPhone: "+91 98765 43210", donorEmail: "garden@cafe.com", title: "Vegetarian Pasta Trays", description: "5 trays of warm vegetable penne pasta. Surplus from a lunch corporate event.", quantity: "5 trays (approx. 25 servings)", expiryTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), foodType: "Cooked Meals", status: "delivered", address: "H-Block, Connaught Place, New Delhi", lat: 28.6304, lng: 77.2177, createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() }
 ];
 
 const SEED_PICKUPS = [
