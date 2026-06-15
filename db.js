@@ -78,6 +78,11 @@ const initDb = async () => {
       )
     `);
 
+    // Ensure new columns exist for existing tables
+    await client.query(`ALTER TABLE listings ADD COLUMN IF NOT EXISTS donor_phone VARCHAR(30)`);
+    await client.query(`ALTER TABLE listings ADD COLUMN IF NOT EXISTS donor_email VARCHAR(100)`);
+    await client.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS listing_id VARCHAR(50)`);
+
     console.log("PostgreSQL Database tables verified/initialized.");
 
     // Seed default users if empty
